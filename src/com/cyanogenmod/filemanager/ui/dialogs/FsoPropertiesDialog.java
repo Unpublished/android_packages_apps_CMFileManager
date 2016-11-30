@@ -387,6 +387,7 @@ public class FsoPropertiesDialog
      */
     private void loadAIDs() {
         // Load owners and groups AIDs in background
+        mPermissionsViewTab.setEnabled(false);
         AsyncTask<Void, Void, SparseArray<AID>> aidsTask =
                         new AsyncTask<Void, Void, SparseArray<AID>>() {
             @Override
@@ -435,6 +436,7 @@ public class FsoPropertiesDialog
                             FsoPropertiesDialog.this.mContext,
                             FsoPropertiesDialog.this.mSpnGroup, data, groupPosition);
                 }
+                mPermissionsViewTab.setEnabled(true);
             }
         };
         aidsTask.execute();
