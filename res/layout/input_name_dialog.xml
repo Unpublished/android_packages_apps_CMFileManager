@@ -30,23 +30,43 @@
     android:textAppearance="@style/primary_text_appearance"
     android:textStyle="normal" />
 
-  <EditText
-    android:id="@+id/input_name_dialog_edit"
-    android:layout_width="match_parent"
+  <RelativeLayout
+    android:layout_width="wrap_content"
     android:layout_height="match_parent"
-    android:textSize="@dimen/primary_text_size"
-    android:textStyle="normal"
-    android:layout_marginBottom="@dimen/extra_large_margin"
-    android:layout_marginStart="@dimen/extra_large_margin"
     android:layout_marginEnd="@dimen/extra_large_margin"
-    android:ems="@integer/default_edit_text_ems"
-    android:imeOptions="actionDone|flagNoFullscreen"
-    android:scrollHorizontally="true"
-    android:selectAllOnFocus="true"
-    android:maxLength="255"
-    android:inputType="textNoSuggestions">
-    <requestFocus />
-  </EditText>
+    android:layout_marginStart="@dimen/extra_large_margin">
+
+    <EditText
+      android:id="@+id/input_name_dialog_edit"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:textSize="@dimen/primary_text_size"
+      android:textStyle="normal"
+      android:layout_marginBottom="@dimen/extra_large_margin"
+      android:layout_marginEnd="@dimen/smallest_row_height"
+      android:ems="@integer/default_edit_text_ems"
+      android:imeOptions="actionDone|flagNoFullscreen"
+      android:scrollHorizontally="true"
+      android:selectAllOnFocus="true"
+      android:maxLength="255"
+      android:inputType="textNoSuggestions">
+      <requestFocus />
+    </EditText>
+
+    <ProgressBar
+      android:id="@+id/input_name_dialog_checking"
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:layout_alignBottom="@+id/input_name_dialog_edit"
+      android:layout_alignTop="@+id/input_name_dialog_edit"
+      android:layout_marginStart="-32dp"
+      android:layout_toEndOf="@+id/input_name_dialog_edit"
+      android:indeterminate="true"
+      android:indeterminateOnly="true"
+      android:padding="@dimen/default_margin"
+      android:scaleX="1"
+      android:visibility="gone" />
+  </RelativeLayout>
 
   <TextView
     android:id="@+id/input_name_dialog_message"
@@ -59,7 +79,6 @@
     android:drawableStart="@drawable/ic_material_light_fs_warning"
     android:drawablePadding="@dimen/default_margin"
     android:gravity="start|center_vertical"
-    android:singleLine="false"
     android:text="@null"
     android:textAppearance="@style/secondary_text_appearance"
     android:textSize="@dimen/note_text_size"

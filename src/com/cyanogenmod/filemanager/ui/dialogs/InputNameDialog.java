@@ -19,6 +19,7 @@ package com.cyanogenmod.filemanager.ui.dialogs;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.AsyncTask;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -26,6 +27,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.cyanogenmod.filemanager.R;
@@ -36,7 +38,6 @@ import com.cyanogenmod.filemanager.util.DialogHelper;
 import com.cyanogenmod.filemanager.util.FileHelper;
 
 import java.io.File;
-import java.util.List;
 
 /**
  * A class that wraps a dialog for input a name for file, folder, ...
@@ -51,6 +52,8 @@ public class InputNameDialog
      * @hide
      */
     final AlertDialog mDialog;
+    private AsyncTask mCheckName;
+    private final ProgressBar mChecking;
     private final TextView mMsg;
     /**
      * @hide
@@ -125,6 +128,7 @@ public class InputNameDialog
         }
         this.mEditText.selectAll();
         this.mEditText.addTextChangedListener(this);
+        this.mChecking = (ProgressBar) v.findViewById(R.id.input_name_dialog_checking);
         this.mMsg = (TextView)v.findViewById(R.id.input_name_dialog_message);
 
         // Apply the current theme
@@ -255,57 +259,74 @@ public class InputNameDialog
      * @hide
      */
     void checkName(String name) {
-
-        //The name is empty
-        if (TextUtils.isEmpty(name)) {
-            setMsg(
-                InputNameDialog.this.mContext.getString(
-                      R.string.input_name_dialog_message_empty_name), false);
-            return;
+        if (mCheckName != null) {
+            mCheckName.cancel(true);
         }
+        mCheckName = new AsyncTask<String, Void, String>() {
 
-        // Too long
-        if (name.length() >= FILENAME_CHAR_LIMIT) {
-            setMsg(InputNameDialog.this.mContext.getString(
-                    R.string.input_name_dialog_message_invalid_name_length), true);
-            return;
-        }
+            boolean mShouldActivate = false;
 
-        // The path is invalid
-        if (name.contains(File.separator)) {
-            setMsg(
-                InputNameDialog.this.mContext.getString(
-                      R.string.input_name_dialog_message_invalid_path_name,
-                      File.separator), false);
-            return;
-        }
+            @Override
+            protected void onPreExecute() {
+                InputNameDialog.this.mDialog.getButton(DialogInterface.BUTTON_POSITIVE)
+                        .setEnabled(false);
+                mChecking.setVisibility(View.VISIBLE);
+            }
 
-        // No allow . or ..
-        if (name.compareTo(FileHelper.CURRENT_DIRECTORY) == 0 ||
-                name.compareTo(FileHelper.PARENT_DIRECTORY) == 0) {
-            setMsg(
-                InputNameDialog.this.mContext.getString(
-                        R.string.input_name_dialog_message_invalid_name), false);
-            return;
-        }
+            @Override
+            protected String doInBackground(String... names) {
+                String name = names[0];
+                //The name is empty
+                if (TextUtils.isEmpty(name)) {
+                    return InputNameDialog.this.mContext.getString(
+                            R.string.input_name_dialog_message_empty_name);
+                }
 
-        // The same name
-        if (this.mFso != null && !this.mAllowFsoName && name.compareTo(this.mFso.getName()) == 0) {
-            setMsg(null, false);
-            return;
-        }
+                // Too long
+                if (name.length() >= FILENAME_CHAR_LIMIT) {
+                    mShouldActivate = true;
+                    return InputNameDialog.this.mContext.getString(
+                            R.string.input_name_dialog_message_invalid_name_length);
+                }
 
-        // Name exists
-        if (FileHelper.isNameExists(this.mContext, this.mParent, name)) {
-            setMsg(
-                InputNameDialog.this.mContext.getString(
-                        R.string.input_name_dialog_message_name_exists), false);
-            return;
-        }
+                // The path is invalid
+                if (name.contains(File.separator)) {
+                    return InputNameDialog.this.mContext.getString(
+                            R.string.input_name_dialog_message_invalid_path_name, File.separator);
+                }
 
-        //Valid name
-        setMsg(null, true);
+                // No allow . or ..
+                if (name.compareTo(FileHelper.CURRENT_DIRECTORY) == 0 ||
+                        name.compareTo(FileHelper.PARENT_DIRECTORY) == 0) {
+                    return InputNameDialog.this.mContext.getString(
+                            R.string.input_name_dialog_message_invalid_name);
+                }
 
+                // The same name
+                if (InputNameDialog.this.mFso != null && !InputNameDialog.this.mAllowFsoName &&
+                        name.compareTo(InputNameDialog.this.mFso.getName()) == 0) {
+                    return null;
+                }
+
+                // Name exists
+                if (FileHelper.isNameExists(InputNameDialog.this.mContext,
+                        InputNameDialog.this.mParent, name)) {
+                    return InputNameDialog.this.mContext.getString(
+                            R.string.input_name_dialog_message_name_exists);
+                }
+
+                //Valid name
+                mShouldActivate = true;
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(String msg) {
+                mCheckName = null;
+                setMsg(msg, mShouldActivate);
+                mChecking.setVisibility(View.GONE);
+            }
+        }.execute(name);
     }
 
     /**
@@ -313,6 +334,9 @@ public class InputNameDialog
      */
     @Override
     public void onDismiss(DialogInterface dialog) {
+        if (mCheckName != null) {
+            mCheckName.cancel(true);
+        }
         if (!InputNameDialog.this.mCancelled) {
             if (this.mOnDismissListener != null) {
                 this.mOnDismissListener.onDismiss(dialog);
