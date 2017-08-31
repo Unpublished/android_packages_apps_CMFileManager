@@ -37,6 +37,7 @@ LOCAL_STATIC_JAVA_LIBRARIES += uicommon
 
 LOCAL_PACKAGE_NAME := CMFileManager
 LOCAL_CERTIFICATE := platform
+LOCAL_JACK_ENABLED := disabled
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
 
 include $(BUILD_PACKAGE)
